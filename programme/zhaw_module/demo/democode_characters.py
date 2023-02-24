@@ -31,3 +31,4 @@ matrix.clear()
 matrix.draw_list(
     CharacterTable.A, ColorTable.RED
 )
+matrix.apply()

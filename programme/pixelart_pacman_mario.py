@@ -101,8 +101,7 @@ while True:
         WCL.draw_list(ghost_eyes_right4, CL.WHITE)
 
         WCL.apply()
-        #sleep_ms(300)
-        sleep_ms(10)
+        sleep_ms(300)
 
     for offset in reversed(range(-12,50)):
         WCL.clear()
@@ -134,8 +133,7 @@ while True:
         WCL.draw_list(pacman, CL.YELLOW)
 
         WCL.apply()
-        #sleep_ms(50)
-        sleep_ms(10)
+        sleep_ms(50)
 
     # ------------------------------------------------------------------------------
     # HEART
