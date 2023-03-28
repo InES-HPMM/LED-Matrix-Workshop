@@ -1,6 +1,9 @@
 from utime import sleep_ms
-from ledmatrix import *
-
+from zhaw_led_matrix import (
+    LedMatrix,
+    PixelColor,
+    ColorTable
+)
 #=============================================================
 # List X Offset
 # --> Moves list to the left edge outside of the LED Matrix
@@ -55,27 +58,27 @@ WCL.set_brightness(10)
 #=============================================================
 # Pixel Art Lists
 #=============================================================
-ghost_body = [(0,0),(2,0),(4,0),(6,0),(0,1),(1,1),(2,1),(3,1),(4,1),(5,1),(6,1),(0,2),(1,2),(2,2),(3,2),(4,2),(5,2),(6,2),(0,3),(1,3),(2,3),(3,3),(4,3),(5,3),(6,3),(0,4),(3,4),(6,4),(0,5),(3,5),(6,5),(1,6),(2,6),(3,6),(4,6),(5,6),(2,7),(3,7),(4,7)]
-ghost_eyes_right = [(1,4),(2,5),(1,5),(4,5),(5,5),(4,4)]
-ghost_eyes_left = [(2,4),(2,5),(1,5),(4,5),(5,5),(5,4)]
-pacman_closed =[(3,0),(4,0),(5,0),(2,1),(3,1),(4,1),(5,1),(6,1),(1,2),(2,2),(3,2),(4,2),(5,2),(6,2),(7,2),(1,3),(2,3),(3,3),(4,3),(5,3),(6,3),(7,3),(1,4),(2,4),(4,4),(5,4),(6,4),(7,4),(2,5),(3,5),(4,5),(5,5),(6,5),(3,6),(4,6),(5,6)]
-pacman_open = [(2,0),(3,0),(4,0),(5,0),(1,1),(2,1),(3,1),(4,1),(5,1),(6,1),(3,2),(4,2),(5,2),(6,2),(7,2),(5,3),(6,3),(7,3),(3,4),(4,4),(5,4),(6,4),(7,4),(1,5),(2,5),(4,5),(5,5),(6,5),(2,6),(3,6),(4,6),(5,6),]
-pacman_closed1 =[(2,0),(3,0),(4,0),(5,0),(1,1),(2,1),(3,1),(4,1),(5,1),(6,1),(0,2),(1,2),(2,2),(3,2),(4,2),(5,2),(6,2),(7,2),(0,3),(1,3),(2,3),(3,3),(4,3),(5,3),(6,3),(7,3),(0,4),(1,4),(2,4),(3,4),(4,4),(5,4),(6,4),(7,4),(1,5),(2,5),(4,5),(5,5),(6,5),(2,6),(3,6),(4,6),(5,6)]
-heart = [(3,0),(2,1),(3,1),(4,1),(1,2),(2,2),(3,2),(4,2),(5,2),(0,3),(1,3),(2,3),(3,3),(4,3),(5,3),(6,3),(0,4),(1,4),(2,4),(3,4),(4,4),(5,4),(6,4),(1,5),(2,5),(4,5),(5,5)]
-mario_red = [[1, 0], [2, 0], [4, 0], [5, 0], [1, 1], [3, 1], [5, 1], [2, 2], [4, 2], [0, 6], [1, 6], [2, 6], [3, 6], [4, 6], [5, 6], [6, 6], [7, 6], [1, 7], [2, 7], [3, 7], [4, 7], [5, 7]]
-mario_skin = [[0, 1], [2, 1], [4, 1], [6, 1], [1, 3], [2, 3], [3, 3], [1, 4], [3, 4], [4, 4], [6, 4], [7, 4], [3, 5], [5, 5], [6, 5]]
-mario_brown = [[1, 2], [3, 2], [5, 2], [4, 3], [5, 3], [6, 3], [5, 4], [2, 4], [0, 4], [0, 5], [1, 5], [2, 5], [4, 5]]
-mario_eye = [[4, 5]]
-shroom_white = [[2, 0], [5, 0], [2, 1], [5, 1], [1, 3], [5, 3], [6, 3], [0, 4], [1, 4], [2, 4], [4, 4], [5, 4], [6, 4], [7, 4], [3, 5], [2, 5], [6, 5], [7, 5], [3, 6], [6, 6], [3, 7], [4, 7], [5, 7]]
-shroom_red = [[3, 0], [4, 0], [3, 4], [4, 5], [5, 5], [4, 6], [5, 6], [0, 5], [1, 5], [1, 6], [2, 6], [2, 7]]
-shroom_orange = [[1, 1], [3, 1], [4, 1], [6, 1], [2, 2], [3, 2], [4, 2], [5, 2], [3, 3]]
-shroom_orange_2 = [[1, 2], [3, 1], [4, 1], [6, 2], [2, 2], [3, 2], [4, 2], [5, 2], [3, 3]]
+ghost_body = [[0,0],[2,0],[4,0],[6,0],[0,1],[1,1],[2,1],[3,1],[4,1],[5,1],[6,1],[0,2],[1,2],[2,2],[3,2],[4,2],[5,2],[6,2],[0,3],[1,3],[2,3],[3,3],[4,3],[5,3],[6,3],[0,4],[3,4],[6,4],[0,5],[3,5],[6,5],[1,6],[2,6],[3,6],[4,6],[5,6],[2,7],[3,7],[4,7]]
+ghost_eyes_right = [[1,4],[2,5],[1,5],[4,5],[5,5],[4,4]]
+ghost_eyes_left = [[2,4],[2,5],[1,5],[4,5],[5,5],[5,4]]
+yellow_eater_closed =[[3,0],[4,0],[5,0],[2,1],[3,1],[4,1],[5,1],[6,1],[1,2],[2,2],[3,2],[4,2],[5,2],[6,2],[7,2],[1,3],[2,3],[3,3],[4,3],[5,3],[6,3],[7,3],[1,4],[2,4],[4,4],[5,4],[6,4],[7,4],[2,5],[3,5],[4,5],[5,5],[6,5],[3,6],[4,6],[5,6]]
+yellow_eater_open = [[2,0],[3,0],[4,0],[5,0],[1,1],[2,1],[3,1],[4,1],[5,1],[6,1],[3,2],[4,2],[5,2],[6,2],[7,2],[5,3],[6,3],[7,3],[3,4],[4,4],[5,4],[6,4],[7,4],[1,5],[2,5],[4,5],[5,5],[6,5],[2,6],[3,6],[4,6],[5,6],]
+yellow_eater_closed1 =[[2,0],[3,0],[4,0],[5,0],[1,1],[2,1],[3,1],[4,1],[5,1],[6,1],[0,2],[1,2],[2,2],[3,2],[4,2],[5,2],[6,2],[7,2],[0,3],[1,3],[2,3],[3,3],[4,3],[5,3],[6,3],[7,3],[0,4],[1,4],[2,4],[3,4],[4,4],[5,4],[6,4],[7,4],[1,5],[2,5],[4,5],[5,5],[6,5],[2,6],[3,6],[4,6],[5,6]]
+heart = [[3,0],[2,1],[3,1],[4,1],[1,2],[2,2],[3,2],[4,2],[5,2],[0,3],[1,3],[2,3],[3,3],[4,3],[5,3],[6,3],[0,4],[1,4],[2,4],[3,4],[4,4],[5,4],[6,4],[1,5],[2,5],[4,5],[5,5]]
+man_red = [[1, 0], [2, 0], [4, 0], [5, 0], [1, 1], [3, 1], [5, 1], [2, 2], [4, 2], [0, 6], [1, 6], [2, 6], [3, 6], [4, 6], [5, 6], [6, 6], [7, 6], [1, 7], [2, 7], [3, 7], [4, 7], [5, 7]]
+man_skin = [[0, 1], [2, 1], [4, 1], [6, 1], [1, 3], [2, 3], [3, 3], [1, 4], [3, 4], [4, 4], [6, 4], [7, 4], [3, 5], [5, 5], [6, 5]]
+man_brown = [[1, 2], [3, 2], [5, 2], [4, 3], [5, 3], [6, 3], [5, 4], [2, 4], [0, 4], [0, 5], [1, 5], [2, 5], [4, 5]]
+man_eye = [[4, 5]]
+mushroom_white = [[2, 0], [5, 0], [2, 1], [5, 1], [1, 3], [5, 3], [6, 3], [0, 4], [1, 4], [2, 4], [4, 4], [5, 4], [6, 4], [7, 4], [3, 5], [2, 5], [6, 5], [7, 5], [3, 6], [6, 6], [3, 7], [4, 7], [5, 7]]
+mushroom_red = [[3, 0], [4, 0], [3, 4], [4, 5], [5, 5], [4, 6], [5, 6], [0, 5], [1, 5], [1, 6], [2, 6], [2, 7]]
+mushroom_orange = [[1, 1], [3, 1], [4, 1], [6, 1], [2, 2], [3, 2], [4, 2], [5, 2], [3, 3]]
+mushroom_orange_2 = [[1, 2], [3, 1], [4, 1], [6, 2], [2, 2], [3, 2], [4, 2], [5, 2], [3, 3]]
 
 
 
 while True:
     # ------------------------------------------------------------------------------
-    # GHOSTS AND PACMAN
+    # GHOSTS AND yellow_eater
     # ------------------------------------------------------------------------------
     for offset in range(50):
         WCL.clear()
@@ -127,10 +130,10 @@ while True:
         WCL.draw_list(ghost_eyes_left4, CL.WHITE)
 
         if offset%2==0:
-            pacman = list_offset_x(pacman_closed,offset+10, WCL.cols)
+            yellow_eater = list_offset_x(yellow_eater_closed,offset+10, WCL.cols)
         else:
-            pacman = list_offset_x(pacman_open,offset+10, WCL.cols)
-        WCL.draw_list(pacman, CL.YELLOW)
+            yellow_eater = list_offset_x(yellow_eater_open,offset+10, WCL.cols)
+        WCL.draw_list(yellow_eater, CL.YELLOW)
 
         WCL.apply()
         sleep_ms(50)
@@ -172,72 +175,72 @@ while True:
 
 
     # ------------------------------------------------------------------------------
-    # Super MARIO - Jumping
+    # Man - Jumping
     # ------------------------------------------------------------------------------
     for offset in range(18):
         WCL.clear()
 
-        # super mario jumping
-        mario_red_o = list_offset_x(mario_red, offset, WCL.cols)
-        mario_skin_o = list_offset_x(mario_skin, offset, WCL.cols)
-        mario_brown_o = list_offset_x(mario_brown, offset-1, WCL.cols)
-        mario_eye_o = list_offset_x(mario_eye, offset-3, WCL.cols)
+        # super man jumping
+        man_red_o = list_offset_x(man_red, offset, WCL.cols)
+        man_skin_o = list_offset_x(man_skin, offset, WCL.cols)
+        man_brown_o = list_offset_x(man_brown, offset-1, WCL.cols)
+        man_eye_o = list_offset_x(man_eye, offset-3, WCL.cols)
 
         # jump every fifth time
         if offset%5==0:
-            mario_red_oo = list_offset_y(mario_red_o, 1, WCL.rows)
-            mario_skin_oo = list_offset_y(mario_skin_o, 1, WCL.rows)
-            mario_brown_oo = list_offset_y(mario_brown_o, 1, WCL.rows)
-            mario_eye_oo = list_offset_y(mario_eye_o, 1, WCL.rows)
+            man_red_oo = list_offset_y(man_red_o, 1, WCL.rows)
+            man_skin_oo = list_offset_y(man_skin_o, 1, WCL.rows)
+            man_brown_oo = list_offset_y(man_brown_o, 1, WCL.rows)
+            man_eye_oo = list_offset_y(man_eye_o, 1, WCL.rows)
         else:
-            mario_red_oo = mario_red_o
-            mario_skin_oo = mario_skin_o
-            mario_brown_oo = mario_brown_o
-            mario_eye_oo = mario_eye_o
+            man_red_oo = man_red_o
+            man_skin_oo = man_skin_o
+            man_brown_oo = man_brown_o
+            man_eye_oo = man_eye_o
 
-        WCL.draw_list(mario_red_oo, CL.RED)
-        WCL.draw_list(mario_skin_oo, CL.ORANGE)
-        WCL.draw_list(mario_brown_oo, (60,30,0))
-        WCL.draw_list(mario_eye_oo, CL.BLACK)
+        WCL.draw_list(man_red_oo, CL.RED)
+        WCL.draw_list(man_skin_oo, CL.ORANGE)
+        WCL.draw_list(man_brown_oo, (60,30,0))
+        WCL.draw_list(man_eye_oo, CL.BLACK)
 
         WCL.apply()
         sleep_ms(200)
 
     # ------------------------------------------------------------------------------
-    # Mushroom
+    # Mumushroom
     # ------------------------------------------------------------------------------
     for offset in range(40):
         WCL.clear()
 
-        #SHROOM 1
-        shroom_white_o = list_offset_x(shroom_white, offset, WCL.cols)
-        shroom_red_o = list_offset_x(shroom_red, offset-2, WCL.cols)
+        #mushroom 1
+        mushroom_white_o = list_offset_x(mushroom_white, offset, WCL.cols)
+        mushroom_red_o = list_offset_x(mushroom_red, offset-2, WCL.cols)
         if offset%2==0:
-            shroom_orange_o = list_offset_x(shroom_orange, offset-1, WCL.cols)
+            mushroom_orange_o = list_offset_x(mushroom_orange, offset-1, WCL.cols)
         else:
-            shroom_orange_o = list_offset_x(shroom_orange_2, offset-1, WCL.cols)
+            mushroom_orange_o = list_offset_x(mushroom_orange_2, offset-1, WCL.cols)
 
-        WCL.draw_list(shroom_white_o, CL.WHITE)
-        WCL.draw_list(shroom_red_o, CL.RED)
-        WCL.draw_list(shroom_orange_o, CL.ORANGE)
+        WCL.draw_list(mushroom_white_o, CL.WHITE)
+        WCL.draw_list(mushroom_red_o, CL.RED)
+        WCL.draw_list(mushroom_orange_o, CL.ORANGE)
 
         #HEART
         heart_o = list_offset_x(heart, offset-10, WCL.cols)
         WCL.draw_list(heart_o, CL.RED)
 
-        #SHROOM 2
-        shroom_white_o2 = list_offset_x(shroom_white, offset-19, WCL.cols)
-        shroom_red_o2 = list_offset_x(shroom_red, offset-21, WCL.cols)
-        shroom_orange_o2 = list_offset_x(shroom_orange, offset-20, WCL.cols)
+        #mushroom 2
+        mushroom_white_o2 = list_offset_x(mushroom_white, offset-19, WCL.cols)
+        mushroom_red_o2 = list_offset_x(mushroom_red, offset-21, WCL.cols)
+        mushroom_orange_o2 = list_offset_x(mushroom_orange, offset-20, WCL.cols)
 
         if offset%2==0:
-            shroom_orange_o2 = list_offset_x(shroom_orange, offset-20, WCL.cols)
+            mushroom_orange_o2 = list_offset_x(mushroom_orange, offset-20, WCL.cols)
         else:
-            shroom_orange_o2 = list_offset_x(shroom_orange_2, offset-20, WCL.cols)
+            mushroom_orange_o2 = list_offset_x(mushroom_orange_2, offset-20, WCL.cols)
 
-        WCL.draw_list(shroom_white_o2, CL.WHITE)
-        WCL.draw_list(shroom_red_o2, CL.RED)
-        WCL.draw_list(shroom_orange_o2, CL.ORANGE)
+        WCL.draw_list(mushroom_white_o2, CL.WHITE)
+        WCL.draw_list(mushroom_red_o2, CL.RED)
+        WCL.draw_list(mushroom_orange_o2, CL.ORANGE)
 
         WCL.apply()
         sleep_ms(160)

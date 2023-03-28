@@ -1,9 +1,12 @@
 import random
 
-from button import Button
-from clock import Clock
-from ledmatrix import PixelColor, ColorTable
-from wordclock import WordClock
+from zhaw_led_matrix import (
+    Clock,
+    Button,
+    ColorTable,
+    PixelColor,
+    WordClock
+)
 
 button = Button()
 clock = Clock()

@@ -1,9 +1,10 @@
-from characters import (
-    ClockTable,
-    CharacterTable,
-)
-from ledmatrix import ColorTable, LedMatrix
 from utime import sleep_ms
+from zhaw_led_matrix import (
+    CharacterTable,
+    ClockTable,
+    ColorTable,
+    LedMatrix,
+)
 
 # LED-Matrix initialisieren
 matrix = LedMatrix(8, 8)

@@ -1,7 +1,7 @@
 from machine import Timer
 
-from characters import ClockTable
-from ledmatrix import ColorTable, LedMatrix
+from .characters import ClockTable
+from .ledmatrix import ColorTable, LedMatrix
 
 
 class WordClock:

@@ -1,6 +1,7 @@
 from machine import Pin  # GPIO access
 from neopixel import NeoPixel  # library that handles LEDs
 from collections import namedtuple
+import ustruct
 
 # pin to which NeoPixel LEDs are connected to
 PIN_NP = 19
@@ -157,3 +158,47 @@ class LedMatrix:
             else:
                 D = D + 2 * dx
 
+    def draw_bitmap(self, path):
+        """
+        Draw a bitmap file with a color depth of 24 bit
+
+        bitmap format: https://en.wikipedia.org/wiki/BMP_file_format
+
+        :param string path: path to bitmap file
+        """
+
+        file = open(path, "rb")
+        bmp = file.read()
+
+        color_depth = int.from_bytes(bmp[28:30], "little")
+        bitmap_size = int.from_bytes(bmp[2:6], "little")
+        bitmap_offset = int.from_bytes(bmp[10:14], "little")
+        image_size = int.from_bytes(bmp[34:38], "little")
+        bitmap_height = ustruct.unpack("<h", bmp[22:26])[0]
+        upper_left_origin = bitmap_height < 0
+        bitmap_height = abs(bitmap_height)
+        pic = bmp[bitmap_offset:]
+
+        if image_size != self.rows * self.cols * 3 or bitmap_height != self.rows:
+            raise Exception(
+                f"The bitmap has the wrong size. Use bitmaps with a size of {self.cols}x{self.rows}."
+            )
+
+        if (color_depth) != 24:
+            raise Exception(
+                f"Wrong color-depth ({color_depth})) detected. Use bitmaps with a color-depth of 24 bits.",
+            )
+
+        if (bitmap_size) != 246:
+            print(
+                "The bitmap size is different than expected. The image may be defective."
+            )
+
+        for i, p in enumerate(self):
+            if upper_left_origin:
+                x = i % self.cols
+                y = i // self.cols
+                y = self.rows - 1 - y
+                i = y * self.cols + x
+            i *= 3
+            p.set((pic[i + 2], pic[i + 1], pic[i]))

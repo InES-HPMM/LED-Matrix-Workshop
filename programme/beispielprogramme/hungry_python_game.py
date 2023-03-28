@@ -1,19 +1,21 @@
 from collections import namedtuple
 from random import randint
-
-from button import Button
-from ledmatrix import ColorTable, LedMatrix
 from machine import Timer
 
+from zhaw_led_matrix import (
+    LedMatrix,
+    Button,
+    ColorTable
+)
 
 Pos = namedtuple("Pos", ["x", "y"])
 
 
-class SnakeGame:
+class HungryPythonGame:
     MAX_VELOCITY: int = 48
 
     def __init__(self, cols: int, rows: int):
-        self._snake = RingBuf(cols * rows)
+        self._hungry_python = RingBuf(cols * rows)
         self._field_size: Pos = Pos(cols, rows)
         self._food_pos: Pos = None
         self._velocity: int = 0
@@ -24,8 +26,8 @@ class SnakeGame:
         self.reset()
 
     def reset(self):
-        self._snake.clear()
-        self._snake.push(self.__get_random_pos())
+        self._hungry_python.clear()
+        self._hungry_python.push(self.__get_random_pos())
         self._just_ate = False
         self._game_over = False
         self._velocity = 1
@@ -46,7 +48,7 @@ class SnakeGame:
             for y in range(self._field_size.y):
                 pos = Pos(x, y)
 
-                if any(map(lambda p: p == pos, self._snake)):
+                if any(map(lambda p: p == pos, self._hungry_python)):
                     continue
 
                 if i == n:
@@ -58,10 +60,10 @@ class SnakeGame:
         raise Exception("no free position for food found")
 
     def get_head_pos(self) -> Pos:
-        return self._snake.last()
+        return self._hungry_python.last()
 
     def get_tail_pos(self) -> Pos:
-        return self._snake.first()
+        return self._hungry_python.first()
 
     def get_food_pos(self) -> Pos:
         return self._food_pos
@@ -121,11 +123,11 @@ class SnakeGame:
             return
 
         # move head
-        self._snake.push(next_pos)
+        self._hungry_python.push(next_pos)
 
         if not self._just_ate:
             # move tail
-            self._snake.pop()
+            self._hungry_python.pop()
         else:
             self._just_ate = False
             if len(self) == self.get_max_len():
@@ -141,16 +143,16 @@ class SnakeGame:
             self._velocity = min(self.MAX_VELOCITY, self._velocity + 1)
 
     def __iter__(self):
-        return self._snake.__iter__()
+        return self._hungry_python.__iter__()
 
     def __getitem__(self, i):
-        return self._snake.__getitem__(i)
+        return self._hungry_python.__getitem__(i)
 
     def __len__(self):
-        return len(self._snake)
+        return len(self._hungry_python)
 
     def __str__(self):
-        return str(self._snake)
+        return str(self._hungry_python)
 
 
 class RingBuf:
@@ -226,51 +228,51 @@ class Direction:
 
 
 def joystick_center_handler(_):
-    if snake.is_game_over():
-        snake.reset()
+    if hungry_python.is_game_over():
+        hungry_python.reset()
 
 
 def joystick_left_handler(_):
-    snake.set_direction(Direction.LEFT)
+    hungry_python.set_direction(Direction.LEFT)
 
 
 def joystick_right_handler(_):
-    snake.set_direction(Direction.RIGHT)
+    hungry_python.set_direction(Direction.RIGHT)
 
 
 def joystick_up_handler(_):
-    snake.set_direction(Direction.UP)
+    hungry_python.set_direction(Direction.UP)
 
 
 def joystick_down_handler(_):
-    snake.set_direction(Direction.DOWN)
+    hungry_python.set_direction(Direction.DOWN)
 
 
-def snakey_snake(_):
-    snake.progress()
+def slithering_python(_):
+    hungry_python.progress()
     matrix.clear()
-    if snake.is_game_over():
-        snake_color = ColorTable.RED
+    if hungry_python.is_game_over():
+        hungry_python_color = ColorTable.RED
     else:
-        snake_color = ColorTable.GREEN
-    for pos in snake:
-        matrix[pos].set(snake_color)
-    head_pos = snake.get_head_pos()
+        hungry_python_color = ColorTable.GREEN
+    for pos in hungry_python:
+        matrix[pos].set(hungry_python_color)
+    head_pos = hungry_python.get_head_pos()
     if head_pos is not None:
         matrix[head_pos] = ColorTable.TEAL
-    food_pos = snake.get_food_pos()
+    food_pos = hungry_python.get_food_pos()
     if food_pos is not None:
         matrix[food_pos] = ColorTable.ORANGE
     matrix.apply()
 
     timer.init(
-        mode=Timer.ONE_SHOT, period=snake.get_timer_period(), callback=snakey_snake
+        mode=Timer.ONE_SHOT, period=hungry_python.get_timer_period(), callback=slithering_python
     )
 
 
 num_rows, num_cols = (8, 8)
 matrix = LedMatrix(num_rows, num_cols)
-snake = SnakeGame(num_rows, num_cols)
+hungry_python = HungryPythonGame(num_rows, num_cols)
 
 button = Button()
 timer = Timer()
@@ -281,4 +283,4 @@ button.set_right_handler(joystick_right_handler)
 button.set_up_handler(joystick_up_handler)
 button.set_down_handler(joystick_down_handler)
 
-snakey_snake(None)
+slithering_python(None)

@@ -1,9 +1,9 @@
-from ledmatrix import (
+from utime import sleep_ms
+from zhaw_led_matrix import (
     ColorTable,
     LedMatrix,
     PixelColor,
 )
-from utime import sleep_ms
 
 # Kreiere eigene Farbe
 my_color = PixelColor(2, 211, 13)

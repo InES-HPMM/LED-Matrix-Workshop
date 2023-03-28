@@ -1,5 +1,8 @@
-from ledmatrix import LedMatrix, PixelColor
 from utime import sleep_ms
+from zhaw_led_matrix import (
+    LedMatrix,
+    PixelColor,
+)
 
 matrix = LedMatrix(8, 8)
 

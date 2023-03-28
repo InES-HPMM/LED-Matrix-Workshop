@@ -1,4 +1,4 @@
-from button import Button
+from zhaw_led_matrix import Button
 
 # Button initialisieren
 btn = Button()
