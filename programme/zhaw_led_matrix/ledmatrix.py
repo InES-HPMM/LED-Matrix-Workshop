@@ -67,19 +67,20 @@ class LedMatrix:
         self._brightness = 50
         self.buf = [PixelColor(*ColorTable.BLACK) for _ in range(self.rows * self.cols)]
 
-    def __getitem__(self, coord):
+    def __cord_to_idx(self, coord):
         try:
             x, y = coord
+            if x >= self.cols or y >= self.rows:
+                raise IndexError(f"coordinates out of range: ({x,y})")
         except TypeError:
             x, y = (coord, 0)
-        return self.buf[y * self.cols + x]
+        return y * self.cols + x
+
+    def __getitem__(self, coord):
+        return self.buf[self.__cord_to_idx(coord)]
 
     def __setitem__(self, coord, color):
-        try:
-            x, y = coord
-        except TypeError:
-            x, y = (coord, 0)
-        self.buf[y * self.cols + x] = PixelColor(*color)
+        self.buf[self.__cord_to_idx(coord)] = PixelColor(*color)
 
     def set_brightness(self, brightness):
         if brightness < 0 or brightness > 100:
@@ -101,10 +102,16 @@ class LedMatrix:
         """set all leds to the given color"""
         [x.set(color) for x in self.buf]
 
-    def draw_list(self, coords, color):
+    def draw_list(self, coords, color, clip=False):
         """set all leds at the given coordinates to the given color"""
         for coord in coords:
-            self[coord] = color
+            try:
+                self[coord] = color
+            except IndexError:
+                if clip:
+                    continue
+                else:
+                    raise
 
     def draw_line(self, start_coord, end_coord, color):
         """
