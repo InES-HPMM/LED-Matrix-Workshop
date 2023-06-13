@@ -1,6 +1,6 @@
 ## Diffusor aus Plexiglas
 
-Der Diffusor wurde bei [myPlexiglas.ch](myPlexiglas.ch) produziert mit folgenden Angaben:
+Der Diffusor wurde bei www.myPlexiglas.ch produziert mit folgenden Angaben:
 
 - Plexiglas Typ: Plexiglas GS - Weiss WH17
 - Form: Rechteck (140x140x3mm)
