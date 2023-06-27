@@ -2,6 +2,7 @@
 - [Ordnerstruktur](#ordnerstruktur)
 - [Dateien herunterladen](#dateien-herunterladen)
 - [**zhaw_led_matrix** Paket auf Pico laden](#paket-auf-pico)
+- [Achtung: Verschiedene Wortuhr Versionen](#wortuhr-versionen)
 
 <a name="#ordnerstruktur"></a>
 # Ordnerstruktur
@@ -37,3 +38,14 @@ Die Anzeige **Dateien** zeigt die Dateien aus diesem Computer. Navigiere zum Ord
 </p>
 
 Jetzt ist der ganze Ordner auf dem RaspberryPi Pico gespeichert. Auf die gleiche Art kannst du auch andere Ordner oder einzelne Programme hochladen. Ab jetzt können auf dem Pico die Module vom **zhaw_led_matrix** Paket benutzt werden.
+
+<a name="#wortuhr-versionen"></a>
+# Achtung: Verschiedene Wortuhr Versionen
+Es gibt zwei Versionen des Ziffernblatts:
+<p align="center">
+<img src="../bilder/ziffernblatt_versionen.png" width="600">
+</p>
+Beim Verwenden von der Wortuhr muss daher die Version im Programm gewählt werden:     
+
+
+WordClock(version=1) oder WordClock(version=2)
