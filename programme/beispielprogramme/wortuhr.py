@@ -10,7 +10,9 @@ from zhaw_led_matrix import (
 
 button = Button()
 clock = Clock()
-wordclock = WordClock(clock)
+
+# Check which version of the wordclock you have and adapt the version parameter
+wordclock = WordClock(clock, version=1)
 
 """
 The clock has two modes:

@@ -1,117 +1,149 @@
-from machine import Pin  # GPIO access
-from neopixel import NeoPixel  # library that handles LEDs
+import gc
 from collections import namedtuple
+
+import micropython
 import ustruct
+from machine import Pin, bitstream  # GPIO access
+from utime import sleep_ms, ticks_ms, ticks_us
 
 # pin to which NeoPixel LEDs are connected to
 PIN_NP = 19
 
+# LED data timing (high_0, low_0, high_1, low_1)
+TIMING = (400, 850, 800, 450)
 
-class PixelColor:
-    """store color for a LED"""
 
-    def __init__(self, r, g, b):
-        self.red = r
-        self.green = g
-        self.blue = b
-
-    def __iter__(self):
-        """allows unpacking"""
-        return iter((self.red, self.green, self.blue))
-
-    def __str__(self):
-        return f"(red: {self.red}, green: {self.green}, blue: {self.blue})"
-
-    def __getitem__(self, i):
-        return (self.red, self.green, self.blue)[i]
-
-    def copy(self):
-        return PixelColor(*self)
-
-    def set(self, color):
-        """:param tuple color: (red, green, blue) color tuple"""
-        self.red, self.green, self.blue = color
+PixelColor = namedtuple("Color", ["red", "green", "blue"])
 
 
 class ColorTable:
     """list of predefined colors"""
 
-    # read only color type for fixed colors
-    Color = namedtuple("Color", ["red", "green", "blue"])
-
-    YELLOW = Color(255, 255, 0)
-    ORANGE = Color(255, 165, 0)
-    RED = Color(255, 0, 0)
-    PURPLE = Color(128, 0, 128)
-    PINK = Color(255, 0, 255)
-    BLUE = Color(0, 0, 255)
-    TEAL = Color(0, 128, 128)
-    AQUA = Color(0, 255, 255)
-    LIME = Color(0, 255, 0)
-    GREEN = Color(0, 128, 0)
-    LGREY = Color(119, 136, 153)
-    GREY = Color(100, 100, 100)
-    BROWN = Color(139, 69, 19)
-    LBROWN = Color(205, 133, 63)
-    WHITE = Color(255, 255, 255)
-    BLACK = Color(0, 0, 0)
+    YELLOW = PixelColor(255, 255, 0)
+    ORANGE = PixelColor(255, 165, 0)
+    RED = PixelColor(255, 0, 0)
+    PURPLE = PixelColor(128, 0, 128)
+    PINK = PixelColor(255, 0, 255)
+    BLUE = PixelColor(0, 0, 255)
+    TEAL = PixelColor(0, 128, 128)
+    AQUA = PixelColor(0, 255, 255)
+    LIME = PixelColor(0, 255, 0)
+    GREEN = PixelColor(0, 128, 0)
+    LGREY = PixelColor(119, 136, 153)
+    GREY = PixelColor(100, 100, 100)
+    BROWN = PixelColor(139, 69, 19)
+    LBROWN = PixelColor(205, 133, 63)
+    WHITE = PixelColor(255, 255, 255)
+    BLACK = PixelColor(0, 0, 0)
 
 
 class LedMatrix:
-    """handle LED operations on the Wordclock"""
+    """
+    handle LED operations on the Wordclock
 
-    def __init__(self, num_rows, num_cols):
-        self.rows = num_rows
-        self.cols = num_cols
-        self._np = NeoPixel(Pin(PIN_NP, Pin.OUT), self.rows * self.cols)
+    When using multiple matrices connect them like this:
+
+        [::]-+ [::]-+ [::]
+         |   |  |   |  |
+        [::] +-[::] +-[::]
+    """
+
+    def __init__(self, num_rows, num_cols, num_matrices=(1, 1)):
+        """
+        :param tuple num_matrices: number of matrices in x and y direction
+        """
+        # size of one matrix
+        self.cols_matrix, self.rows_matrix = num_cols, num_rows
+        self.cols = num_cols * num_matrices[0]
+        self.rows = num_rows * num_matrices[1]
+        self._pin = Pin(PIN_NP, Pin.OUT)
         self._brightness = 50
-        self.buf = [PixelColor(*ColorTable.BLACK) for _ in range(self.rows * self.cols)]
+        self.clear()
 
-    def __cord_to_idx(self, coord):
-        try:
+    @micropython.native
+    def __is_coord_in_range(self, coord):
+        if isinstance(coord, int):
+            return coord < len(self)
+        else:
             x, y = coord
-            if x >= self.cols or y >= self.rows:
-                raise IndexError(f"coordinates out of range: ({x,y})")
-        except TypeError:
-            x, y = (coord, 0)
-        return y * self.cols + x
+            return x >= 0 and x < self.cols and y >= 0 and y < self.rows
 
+    @micropython.native
+    def __coord_to_idx(self, coord):
+        # This is commented for performance reasons, uncomment it for debugging
+        # if not self.__is_coord_in_range(coord):
+        #     raise IndexError(f"coordinates out of range: ({coord})")
+
+        if isinstance(coord, int):
+            x = coord % self.cols
+            y = coord // self.cols
+        else:
+            x, y = coord
+
+        return (
+            x // self.cols_matrix * self.rows * self.cols_matrix
+            + x % self.cols_matrix
+            + y * self.rows_matrix
+        ) * 3
+
+    @micropython.native
     def __getitem__(self, coord):
-        return self.buf[self.__cord_to_idx(coord)]
+        idx = self.__coord_to_idx(coord)
+        buf = memoryview(self.buf)
+        return PixelColor(buf[idx + 1], buf[idx], buf[idx + 2])
 
+    @micropython.native
     def __setitem__(self, coord, color):
-        self.buf[self.__cord_to_idx(coord)] = PixelColor(*color)
+        idx = self.__coord_to_idx(coord)
+        buf = self.buf
+        buf[idx] = color[1]
+        buf[idx + 1] = color[0]
+        buf[idx + 2] = color[2]
 
+    @micropython.native
+    def __len__(self):
+        return self.cols * self.rows
+
+    @micropython.native
     def set_brightness(self, brightness):
         if brightness < 0 or brightness > 100:
             raise Exception(f"invalid brightness argument: {brightness}")
         self._brightness = brightness
 
+    @micropython.native
     def clear(self):
         """turn off all leds"""
-        self.fill(ColorTable.BLACK)
+        self.buf = bytearray(len(self) * 3)
 
+    @micropython.native
     def apply(self):
         """apply brightness and write buffer to leds"""
-        for i in range(len(self._np)):
-            c = (round(x * self._brightness / 100) for x in self.buf[i])
-            self._np[i] = tuple(c)
-        self._np.write()
+        buf = bytearray(self.buf)
+        for i in range(len(buf)):
+            buf[i] = buf[i] * self._brightness // 100
 
+        # bitbang data to LEDs
+        bitstream(self._pin, 0, TIMING, buf)
+
+    @micropython.native
     def fill(self, color):
         """set all leds to the given color"""
-        [x.set(color) for x in self.buf]
+        for i in range(len(self)):
+            self[i] = color
 
-    def draw_list(self, coords, color, clip=False):
-        """set all leds at the given coordinates to the given color"""
+    @micropython.native
+    def draw_list(self, coords, color, crop=False, offset=(0, 0)):
+        """
+        set all leds at the given coordinates to the given color
+
+        :param bool crop: whether to ignore out of bounds coordinates
+        :param tuple offset: offset to apply to each coordinate
+        """
         for coord in coords:
-            try:
-                self[coord] = color
-            except IndexError:
-                if clip:
-                    continue
-                else:
-                    raise
+            coord = coord[0] + offset[0], coord[1] + offset[1]
+            if crop and not self.__is_coord_in_range(coord):
+                continue
+            self[coord] = color
 
     def draw_line(self, start_coord, end_coord, color):
         """
@@ -185,11 +217,10 @@ class LedMatrix:
         upper_left_origin = bitmap_height < 0
         bitmap_height = abs(bitmap_height)
         pic = bmp[bitmap_offset:]
+        bitmap_width = (image_size // 3) // bitmap_height
 
-        if image_size != self.rows * self.cols * 3 or bitmap_height != self.rows:
-            raise Exception(
-                f"The bitmap has the wrong size. Use bitmaps with a size of {self.cols}x{self.rows}."
-            )
+        if bitmap_height > self.rows or bitmap_width > self.cols:
+            print(f"bitmap is larger than matrix: {bitmap_width}x{bitmap_height}")
 
         if (color_depth) != 24:
             raise Exception(
@@ -201,11 +232,92 @@ class LedMatrix:
                 "The bitmap size is different than expected. The image may be defective."
             )
 
-        for i, p in enumerate(self):
+        for i in range(image_size // 3):
             if upper_left_origin:
-                x = i % self.cols
-                y = i // self.cols
-                y = self.rows - 1 - y
-                i = y * self.cols + x
-            i *= 3
-            p.set((pic[i + 2], pic[i + 1], pic[i]))
+                x = i % bitmap_width
+                y = i // bitmap_width
+                y = bitmap_height - 1 - y
+                j = y * bitmap_width + x
+            else:
+                j = i
+            j *= 3
+            self[i] = (pic[j + 2], pic[j + 1], pic[j])
+
+    @micropython.native
+    def move_across(
+        self, bitmaps, length, colors=ColorTable.WHITE, delay_ms=50, direction="left"
+    ):
+        """
+        moves bitmaps across the led matrix
+
+        :param list bitmaps: list of lists with coordinates
+        :param int length: length of all bitmaps combined in the specified direction
+        :param list colors: color to use for each bitmap
+        """
+
+        def is_x_in_bounds(coords, offset):
+            x, _ = coords[0]
+            x_offset, _ = offset
+            if x + x_offset - self.cols > self.cols:
+                return -1
+            if x + x_offset + self.cols < 0:
+                return 1
+            return 0
+
+        def is_y_in_bounds(coords, offset):
+            _, y = coords[0]
+            _, y_offset = offset
+            if y + y_offset - self.rows > self.rows:
+                return -1
+            if y + y_offset + self.rows < 0:
+                return 1
+            return 0
+
+        # wrap in list if only one bitmap is supplied
+        try:
+            bitmaps[0][0][0]
+        except TypeError:
+            bitmaps = [bitmaps]
+
+        # use same color for all bitmaps if only one color is supplied
+        if not isinstance(colors, list):
+            colors = [colors] * len(bitmaps)
+
+        if direction == "left":
+            offset_range = range(self.cols, -(length + 1), -1)
+        elif direction == "right":
+            offset_range = range(-(length + 1), self.cols + 1)
+        elif direction == "up":
+            offset_range = range(-self.rows, self.rows + 1)
+        elif direction == "down":
+            offset_range = range(self.rows, -(self.rows + 1), -1)
+        else:
+            raise Exception("invalid direction")
+
+        if direction in ["left", "right"]:
+            offset_range = (offset_range, [0] * len(offset_range))
+            is_in_bounds = is_x_in_bounds
+        else:
+            offset_range = ([0] * len(offset_range), offset_range)
+            is_in_bounds = is_y_in_bounds
+
+        for offset in zip(*offset_range):
+            self.clear()
+
+            for bitmap, color in zip(bitmaps, colors):
+                if not bitmap:
+                    continue
+
+                # only display bitmap if parts of it are in bounds
+                res = is_in_bounds(bitmap, offset)
+                if res < 0:
+                    break
+                elif res > 0:
+                    continue
+
+                self.draw_list(bitmap, color, crop=True, offset=offset)
+
+            self.apply()
+            # regularly calling the garbage collector reduces stutter
+            gc.collect()
+            sleep_ms(delay_ms)

@@ -10,10 +10,14 @@ from zhaw_led_matrix import (
 matrix = LedMatrix(8, 8)
 matrix.set_brightness(20)
 
+# Check which version of the wordclock
+# you have and adapt the version parameter
+clocktable = ClockTable(version=1)
+
 # Die 10 von der Minutenanzeige in blau
 # leuchten lassen
 matrix.draw_list(
-    ClockTable.MIN_TEN, ColorTable.BLUE
+    clocktable.MIN_TEN, ColorTable.BLUE
 )
 matrix.apply()
 sleep_ms(1000)
@@ -22,7 +26,7 @@ sleep_ms(1000)
 # leuchten lassen
 matrix.clear()
 matrix.draw_list(
-    ClockTable.HOUR_TEN, ColorTable.GREEN
+    clocktable.HOUR_TEN, ColorTable.GREEN
 )
 matrix.apply()
 sleep_ms(1000)
@@ -33,3 +37,9 @@ matrix.draw_list(
     CharacterTable.A, ColorTable.RED
 )
 matrix.apply()
+sleep_ms(1000)
+
+# Laufschrift
+laufschrift = "hello world"
+text, length = CharacterTable.convert_str(laufschrift)
+matrix.move_across(text, length)
