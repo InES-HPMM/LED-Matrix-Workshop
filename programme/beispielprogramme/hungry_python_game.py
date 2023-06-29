@@ -1,12 +1,9 @@
 from collections import namedtuple
 from random import randint
+
 from machine import Timer
 
-from zhaw_led_matrix import (
-    LedMatrix,
-    Button,
-    ColorTable
-)
+from zhaw_led_matrix import Button, ColorTable, LedMatrix
 
 Pos = namedtuple("Pos", ["x", "y"])
 
@@ -17,24 +14,25 @@ class HungryPythonGame:
     def __init__(self, cols: int, rows: int):
         self._hungry_python = RingBuf(cols * rows)
         self._field_size: Pos = Pos(cols, rows)
-        self._food_pos: Pos = None
+        self._game_over: bool = False
+        self._just_ate: bool = False
         self._velocity: int = 0
+        self._food_pos: Pos = None
         self._dir = None
         self._next_dir = None
-        self._just_ate: bool = False
-        self._game_over: bool = False
-        self.reset()
 
     def reset(self):
         self._hungry_python.clear()
         self._hungry_python.push(self.__get_random_pos())
-        self._just_ate = False
         self._game_over = False
+        self._just_ate = False
         self._velocity = 1
         self._dir = Direction.RIGHT
+        self._next_dir = None
+        self._food_pos = None
         self.__place_food()
 
-    def __get_random_pos(self):
+    def __get_random_pos(self) -> Pos:
         return Pos(
             randint(0, self._field_size.x - 1), randint(0, self._field_size.y - 1)
         )
@@ -48,7 +46,7 @@ class HungryPythonGame:
             for y in range(self._field_size.y):
                 pos = Pos(x, y)
 
-                if any(map(lambda p: p == pos, self._hungry_python)):
+                if any(map(lambda p: p == pos, self)):
                     continue
 
                 if i == n:
@@ -70,6 +68,9 @@ class HungryPythonGame:
 
     def is_game_over(self) -> bool:
         return self._game_over
+
+    def is_running(self) -> bool:
+        return self._velocity > 0
 
     def get_timer_period(self) -> int:
         return 100 + (self.MAX_VELOCITY - self._velocity) * 7
@@ -117,6 +118,7 @@ class HungryPythonGame:
         if any(map(lambda p: p == next_pos and p != self.get_tail_pos(), self)):
             self._game_over = True
             self._food_pos = None
+            self._velocity = 0
             return
 
         if self._velocity == 0:
@@ -227,60 +229,84 @@ class Direction:
             return Direction.UP
 
 
-def joystick_center_handler(_):
-    if hungry_python.is_game_over():
-        hungry_python.reset()
+class HungryPythonOnLedMatrix:
+    def __init__(self, allow_restart=True):
+        num_rows, num_cols = (8, 8)
+        self._matrix = LedMatrix(num_rows, num_cols)
+        self._matrix.set_brightness(50)
+        self._hungry_python = HungryPythonGame(num_rows, num_cols)
+
+        button = Button()
+        if allow_restart:
+            button.set_center_handler(self.joystick_center_handler)
+        button.set_left_handler(self.joystick_left_handler)
+        button.set_right_handler(self.joystick_right_handler)
+        button.set_up_handler(self.joystick_up_handler)
+        button.set_down_handler(self.joystick_down_handler)
+
+        self._timer = Timer()
+
+        self._game_over_handler = None
+
+    def get_score(self) -> int:
+        return len(self._hungry_python)
+
+    def is_running(self) -> bool:
+        return self._hungry_python.is_running()
+
+    def reset(self):
+        return self._hungry_python.reset()
+
+    def set_game_over_handler(self, handler):
+        self._game_over_handler = handler
+
+    def joystick_center_handler(self, _):
+        if self._hungry_python.is_game_over():
+            self._hungry_python.reset()
+            self.run()
+
+    def joystick_left_handler(self, _):
+        self._hungry_python.set_direction(Direction.LEFT)
+
+    def joystick_right_handler(self, _):
+        self._hungry_python.set_direction(Direction.RIGHT)
+
+    def joystick_up_handler(self, _):
+        self._hungry_python.set_direction(Direction.UP)
+
+    def joystick_down_handler(self, _):
+        self._hungry_python.set_direction(Direction.DOWN)
+
+    def run(self, _=None):
+        self._hungry_python.progress()
+        self._matrix.clear()
+        if self._hungry_python.is_game_over():
+            hungry_python_color = ColorTable.RED
+        else:
+            hungry_python_color = ColorTable.GREEN
+        for pos in self._hungry_python:
+            self._matrix[pos] = hungry_python_color
+        head_pos = self._hungry_python.get_head_pos()
+        if head_pos is not None:
+            self._matrix[head_pos] = ColorTable.TEAL
+        food_pos = self._hungry_python.get_food_pos()
+        if food_pos is not None:
+            self._matrix[food_pos] = ColorTable.ORANGE
+        self._matrix.apply()
+
+        if not self.is_running():
+            if self._game_over_handler:
+                self._game_over_handler()
+            return
+
+        self._timer.init(
+            mode=Timer.ONE_SHOT,
+            period=self._hungry_python.get_timer_period(),
+            callback=self.run,
+        )
 
 
-def joystick_left_handler(_):
-    hungry_python.set_direction(Direction.LEFT)
-
-
-def joystick_right_handler(_):
-    hungry_python.set_direction(Direction.RIGHT)
-
-
-def joystick_up_handler(_):
-    hungry_python.set_direction(Direction.UP)
-
-
-def joystick_down_handler(_):
-    hungry_python.set_direction(Direction.DOWN)
-
-
-def slithering_python(_):
-    hungry_python.progress()
-    matrix.clear()
-    if hungry_python.is_game_over():
-        hungry_python_color = ColorTable.RED
-    else:
-        hungry_python_color = ColorTable.GREEN
-    for pos in hungry_python:
-        matrix[pos].set(hungry_python_color)
-    head_pos = hungry_python.get_head_pos()
-    if head_pos is not None:
-        matrix[head_pos] = ColorTable.TEAL
-    food_pos = hungry_python.get_food_pos()
-    if food_pos is not None:
-        matrix[food_pos] = ColorTable.ORANGE
-    matrix.apply()
-
-    timer.init(
-        mode=Timer.ONE_SHOT, period=hungry_python.get_timer_period(), callback=slithering_python
-    )
-
-
-num_rows, num_cols = (8, 8)
-matrix = LedMatrix(num_rows, num_cols)
-hungry_python = HungryPythonGame(num_rows, num_cols)
-
-button = Button()
-timer = Timer()
-
-button.set_center_handler(joystick_center_handler)
-button.set_left_handler(joystick_left_handler)
-button.set_right_handler(joystick_right_handler)
-button.set_up_handler(joystick_up_handler)
-button.set_down_handler(joystick_down_handler)
-
-slithering_python(None)
+if __name__ == "__main__":
+    hungry_python = HungryPythonOnLedMatrix()
+    hungry_python.reset()
+    hungry_python.run()
