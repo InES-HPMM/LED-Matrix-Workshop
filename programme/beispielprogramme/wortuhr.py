@@ -12,7 +12,7 @@ button = Button()
 clock = Clock()
 
 # Check which version of the wordclock you have and adapt the version parameter
-wordclock = WordClock(clock, version=1)
+wordclock = WordClock(clock, version=2)
 
 """
 The clock has two modes:
