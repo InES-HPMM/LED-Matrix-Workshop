@@ -2,9 +2,9 @@ import gc
 from collections import namedtuple
 
 import micropython
-import ustruct
+import struct
 from machine import Pin, bitstream  # GPIO access
-from utime import sleep_ms, ticks_ms, ticks_us
+from time import sleep_ms, ticks_ms, ticks_us
 
 # pin to which NeoPixel LEDs are connected to
 PIN_NP = 19
@@ -213,7 +213,7 @@ class LedMatrix:
         bitmap_size = int.from_bytes(bmp[2:6], "little")
         bitmap_offset = int.from_bytes(bmp[10:14], "little")
         image_size = int.from_bytes(bmp[34:38], "little")
-        bitmap_height = ustruct.unpack("<h", bmp[22:26])[0]
+        bitmap_height = struct.unpack("<h", bmp[22:26])[0]
         upper_left_origin = bitmap_height < 0
         bitmap_height = abs(bitmap_height)
         pic = bmp[bitmap_offset:]
@@ -273,6 +273,7 @@ class LedMatrix:
                 return 1
             return 0
 
+
         # wrap in list if only one bitmap is supplied
         try:
             bitmaps[0][0][0]
@@ -282,7 +283,6 @@ class LedMatrix:
         # use same color for all bitmaps if only one color is supplied
         if not isinstance(colors, list):
             colors = [colors] * len(bitmaps)
-
         if direction == "left":
             offset_range = range(self.cols, -(length + 1), -1)
         elif direction == "right":
@@ -294,6 +294,7 @@ class LedMatrix:
         else:
             raise Exception("invalid direction")
 
+
         if direction in ["left", "right"]:
             offset_range = (offset_range, [0] * len(offset_range))
             is_in_bounds = is_x_in_bounds
@@ -301,9 +302,9 @@ class LedMatrix:
             offset_range = ([0] * len(offset_range), offset_range)
             is_in_bounds = is_y_in_bounds
 
+
         for offset in zip(*offset_range):
             self.clear()
-
             for bitmap, color in zip(bitmaps, colors):
                 if not bitmap:
                     continue
