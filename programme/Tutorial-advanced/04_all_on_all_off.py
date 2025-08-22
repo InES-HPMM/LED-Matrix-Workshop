@@ -17,7 +17,7 @@ brightness = 35
 ### Schleife (Programm)      ###
 ### ------------------------ ###
 while True:
-    for i in range(len(np)):
+    for i in range(64):
         np[i] = (brightness, 0, 0)
         np.write()
         sleep_ms(sleepTime)
