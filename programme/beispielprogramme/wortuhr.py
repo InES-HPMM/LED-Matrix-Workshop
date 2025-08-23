@@ -5,14 +5,14 @@ from zhaw_led_matrix import (
     Button,
     ColorTable,
     PixelColor,
-    WordClock
+    WordClockEnglish
 )
 
 button = Button()
 clock = Clock()
 
 # Check which version of the wordclock you have and adapt the version parameter
-wordclock = WordClock(clock, version=2)
+wordclock = WordClockEnglish(clock, version=2)
 
 """
 The clock has two modes:
